@@ -1,0 +1,5 @@
+{
+  "name": "Sistema de Gestão de Conteúdo e Portfólio v2",
+  "description": "Um sistema para gerenciar tarefas de web design e posts de portfólio, com foco em visualização de linha do tempo e controle de ativos (Canva/GMB).",
+  "requestFramePermissions": []
+}
