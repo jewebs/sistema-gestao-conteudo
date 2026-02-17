@@ -13,8 +13,7 @@ interface ImportTasksModalProps {
 const TASK_FIELDS = [
     { key: 'taskName', label: 'Nome da Tarefa', required: true },
     { key: 'projectId', label: 'ID Projeto', required: true },
-    // client and priority are manual inputs
-    { key: 'status', label: 'Status', required: true, enum: Status },
+    // client, priority, and status are manual inputs
     { key: 'canvaAssets.folderUrl', label: 'URL Pasta Canva', required: false },
     { key: 'canvaAssets.folderDescription', label: 'Descrição Pasta Canva', required: false },
     { key: 'canvaAssets.day', label: 'Dia Criação Canva', required: true, type: 'number' },
@@ -33,7 +32,7 @@ const TASK_FIELDS = [
     { key: 'gmbSubtask.year', label: 'Ano Post GMB', required: false, type: 'number' },
 ];
 
-const MAPPABLE_TASK_FIELDS = TASK_FIELDS.filter(field => field.key !== 'client' && field.key !== 'priority');
+const MAPPABLE_TASK_FIELDS = TASK_FIELDS;
 
 
 const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, onImport }) => {
@@ -42,6 +41,7 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
     const [mapping, setMapping] = useState<Record<string, string>>({});
     const [clientName, setClientName] = useState('');
     const [priority, setPriority] = useState<Priority>(Priority.Media);
+    const [status, setStatus] = useState<Status>(Status.Pendente);
     const [error, setError] = useState<string>('');
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,6 +122,7 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
             const task: any = {
                 client: clientName.trim(),
                 priority: priority,
+                status: status,
                 canvaAssets: {},
                 websitePost: {},
                 gmbSubtask: {},
@@ -169,6 +170,7 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
                 return null;
             }
             task.startDate = generateRandomWorkTime(new Date(canvaDate)).toISOString();
+            task.endDate = task.startDate; // Set end date to start date
             task.canvaAssets.creationDate = task.startDate;
             
             const websiteDate = createDateFromParts(task.websitePost?.day, task.websitePost?.month, task.websitePost?.year);
@@ -182,15 +184,7 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
             if (gmbDate) {
                 task.gmbSubtask.postDate = generateRandomWorkTime(new Date(gmbDate)).toISOString();
             }
-
-            const finalEndDate = (gmbDate && gmbDate > websiteDate) ? gmbDate : websiteDate;
-            task.endDate = generateRandomWorkTime(new Date(finalEndDate)).toISOString();
-
-            if (new Date(task.startDate) > new Date(task.endDate)) {
-                 console.warn(`Linha ${index + 3}: Data de início é posterior à data de fim. Ajustando a data de fim.`);
-                 task.endDate = task.startDate;
-            }
-
+            
             return task as Omit<Task, 'taskId'>;
         }).filter(Boolean) as Omit<Task, 'taskId'>[];
 
@@ -224,7 +218,7 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
                             <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
                                 <h3 className="text-lg font-semibold text-gray-700 mb-2">1. Forneça os Dados Padrão</h3>
                                 <p className="text-sm text-gray-600 mb-4">Estes valores serão aplicados a todas as tarefas importadas.</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                      <div>
                                         <label htmlFor="client-name-import" className="block text-sm font-medium text-gray-700">
                                             Nome do Cliente <span className="text-red-500">*</span>
@@ -249,6 +243,19 @@ const ImportTasksModal: React.FC<ImportTasksModalProps> = ({ isOpen, onClose, on
                                             className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white"
                                         >
                                             {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="status-import" className="block text-sm font-medium text-gray-700">
+                                            Status <span className="text-red-500">*</span>
+                                        </label>
+                                         <select
+                                            id="status-import"
+                                            value={status}
+                                            onChange={(e) => setStatus(e.target.value as Status)}
+                                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                        >
+                                            {Object.values(Status).map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
                                 </div>

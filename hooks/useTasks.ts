@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Task } from '../types';
 import { GmbStatus, Priority, Status } from '../types';
 import { addDays, startOfDay, endOfDay } from '../utils/dateUtils';
@@ -53,56 +53,21 @@ const initialTasks: Task[] = [
       status: GmbStatus.NA,
     },
   },
-  {
-    taskId: 'TSK-1718826603',
-    taskName: 'Atualização do Portfólio',
-    projectId: 'PJ01',
-    client: 'Nike',
-    startDate: addDays(new Date(), 7).toISOString(),
-    endDate: addDays(new Date(), 10).toISOString(),
-    priority: Priority.Baixa,
-    status: Status.EmAndamento,
-    canvaAssets: {
-      folderUrl: 'https://canva.com/folder/3',
-      folderDescription: 'Imagens dos últimos projetos',
-      creationDate: addDays(new Date(), 6).toISOString(),
-    },
-    websitePost: {
-      postTitle: 'Novos Projetos no Portfólio',
-      postUrl: 'https://site.com/portfolio-update',
-      postDate: addDays(new Date(), 11).toISOString(),
-    },
-    gmbSubtask: {
-      postDate: addDays(new Date(), 11).toISOString(),
-      status: GmbStatus.Publicado,
-    },
-  },
-   {
-    taskId: 'TSK-1718826604',
-    taskName: 'Revisão SEO Blog',
-    projectId: 'PJ03',
-    client: 'Puma',
-    startDate: addDays(new Date(), -3).toISOString(),
-    endDate: addDays(new Date(), 1).toISOString(),
-    priority: Priority.Alta,
-    status: Status.Concluido,
-    canvaAssets: {
-      folderUrl: 'https://canva.com/folder/4',
-      folderDescription: 'Imagens para posts de blog otimizados',
-      creationDate: addDays(new Date(), -4).toISOString(),
-    },
-    websitePost: {
-      postTitle: 'Blog com SEO Renovado',
-      postUrl: 'https://site.com/blog-seo',
-      postDate: addDays(new Date(), 0).toISOString(),
-    },
-    gmbSubtask: {
-      postDate: addDays(new Date(), 0).toISOString(),
-      status: GmbStatus.Publicado,
-    },
-  },
 ];
 
+const LOCAL_STORAGE_KEY = 'contentManagementTasks';
+
+const loadTasksFromStorage = (): Task[] => {
+  try {
+    const storedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (storedTasks) {
+      return JSON.parse(storedTasks);
+    }
+  } catch (error) {
+    console.error("Failed to load tasks from local storage", error);
+  }
+  return initialTasks;
+};
 
 const getTodayDateRange = () => {
   const today = new Date();
@@ -118,8 +83,16 @@ const initialFilterState = {
 };
 
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(loadTasksFromStorage);
   const [filters, setFilters] = useState(initialFilterState);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+        console.error("Failed to save tasks to local storage", error);
+    }
+  }, [tasks]);
 
   const priorityOrder = { [Priority.Alta]: 1, [Priority.Media]: 2, [Priority.Baixa]: 3 };
 
